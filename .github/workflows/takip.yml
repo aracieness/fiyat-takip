@@ -1,0 +1,24 @@
+name: Fiyat Takip
+on:
+  schedule:
+    - cron: "0 * * * *"   # her saat basi calisir
+  workflow_dispatch:        # elle calistirma dugmesi
+permissions:
+  contents: write
+jobs:
+  takip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python takip.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+      - name: Fiyat gecmisini kaydet
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
