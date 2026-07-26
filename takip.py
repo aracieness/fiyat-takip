@@ -10,13 +10,9 @@ KATEGORILER = [
     ["https://www.n11.com/telefon-ve-aksesuarlari", "pg"],
     ["https://www.n11.com/bilgisayar", "pg"],
     ["https://www.n11.com/bilgisayar/dizustu-bilgisayar", "pg"],
-    # Yeni N11 kategorisi eklemek için: n11.com'da kategorilere tıklaya tıklaya
-    # ÜRÜNLERİN FİYATLARIYLA LİSTELENDİĞİ sayfaya kadar in, adres çubuğundaki
-    # linki kopyala ve buraya yeni satır olarak ekle: ["LINK", "pg"],
-    # Koton kategorisi için aynısı, sonu: "page"],
-]
-    # Yeni kategori eklemek için: siteye gir, kategoriyi aç, linki kopyala,
-    # buraya yeni satır olarak ekle: ["LINK", "page"],  (N11 için "pg")
+    # Yeni kategori eklemek icin: sitede URUNLERIN FIYATLARIYLA listelendigi
+    # sayfaya kadar in, linki kopyala, buraya satir olarak ekle:
+    # ["LINK", "pg"],   (N11 icin "pg", Koton icin "page")
 ]
 
 # Shopify altyapılı siteler
@@ -42,7 +38,7 @@ def tl_virgul(m):
 def sayfa_tara(url):
     p = urlparse(url)
     kok = f"{p.scheme}://{p.netloc}"
-    ana_alan = ".".join(p.netloc.split(".")[-2:])   # n11.com, koton.com...
+    ana_alan = ".".join(p.netloc.split(".")[-2:])
     r = requests.get(url, headers=BASLIK, timeout=30)
     html = r.text
     urunler = {}
@@ -140,7 +136,7 @@ for koleksiyon in SHOPIFY_KOLEKSIYONLAR:
         continue
     isle(bulunan)
     toplam += len(bulunan)
-    print(koleksiyon, "-> takip edilen urun:", len(bulunan))
+    print(toplam and koleksiyon, "-> takip edilen urun:", len(bulunan))
 
 print("Taranan urun-fiyat kaydi:", toplam)
 with open("fiyatlar.json", "w") as f:
