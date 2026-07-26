@@ -1,14 +1,12 @@
 import os, re, json, time, requests
 from urllib.parse import urlparse
 
-ESIK = 80        # yüzde kaç düşüşte bildirim gelsin
+ESIK = 80
 MAX_SAYFA = 10
 
 KATEGORILER = [
     "https://www.koton.com/erkek-tisort/",
     "https://www.boyner.com.tr/erkek-tisort-c-1010",
-    # Koton veya Boyner'den başka kategori eklemek için: siteye gir, kategoriyi aç,
-    # adres çubuğundaki linki buraya tırnak içinde, sonu virgüllü olarak yapıştır.
 ]
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
@@ -22,11 +20,10 @@ def bildir(mesaj):
     requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",
                   data={"chat_id": CHAT_ID, "text": mesaj})
 
-def tl(metin):
-    return float(metin.replace(".", "").replace(",", "."))
+def tl_virgul(m):   # 1.299,99 bicimi
+    return float(m.replace(".", "").replace(",", "."))
 
 def sayfa_tara(url):
-    """Sayfadaki {urun_linki: fiyat} sözlüğünü döndürür (siteden bağımsız genel yöntem)."""
     kok = "{0.scheme}://{0.netloc}".format(urlparse(url))
     r = requests.get(url, headers=BASLIK, timeout=30)
     html = r.text
@@ -34,17 +31,21 @@ def sayfa_tara(url):
     linkler = list(re.finditer(r'<a[^>]+href="([^"#? ]+)"', html))
     for i, m in enumerate(linkler):
         link = m.group(1)
-        if link.startswith("//"):
-            continue
         if link.startswith("/"):
             link = kok + link
         if not link.startswith(kok):
             continue
+        # sadece urun linkleri: son bolumde 5+ haneli sayi olmali
+        son_parca = link.rstrip("/").split("/")[-1]
+        if not re.search(r"\d{5,}", son_parca):
+            continue
         bas = m.end()
         son = linkler[i + 1].start() if i + 1 < len(linkler) else min(len(html), bas + 2500)
         blok = html[bas:son]
-        fiyatlar = [tl(f) for f in re.findall(r'(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*TL', blok)]
-        fiyatlar = [f for f in fiyatlar if f >= 50]
+        fiyatlar = [tl_virgul(f) for f in re.findall(r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*TL', blok)]
+        fiyatlar += [float(f) for f in re.findall(r'>\s*(\d{2,6}\.\d{2})\s*<', blok)]
+        fiyatlar += [float(f) for f in re.findall(r'"(?:price|salePrice|amount|sellingPrice)"\s*:\s*"?(\d{2,6}(?:\.\d{1,2})?)"?', blok)]
+        fiyatlar = [f for f in fiyatlar if 50 <= f <= 200000]
         if fiyatlar:
             fiyat = min(fiyatlar)
             if link not in urunler or fiyat < urunler[link]:
