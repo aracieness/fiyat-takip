@@ -10,15 +10,22 @@ KATEGORILER = [
     ["https://www.n11.com/telefon-ve-aksesuarlari", "pg"],
     ["https://www.n11.com/bilgisayar", "pg"],
     ["https://www.n11.com/bilgisayar/dizustu-bilgisayar", "pg"],
-    # Yeni kategori eklemek icin: sitede URUNLERIN FIYATLARIYLA listelendigi
-    # sayfaya kadar in, linki kopyala, buraya satir olarak ekle:
-    # ["LINK", "pg"],   (N11 icin "pg", Koton icin "page")
+    ["https://www.tudors.com", "page"],
+    ["https://tr.uspoloassn.com", "page"],
+    ["https://www.dermoeczanem.com", "page"],
+    ["https://www.evidea.com", "page"],
+    ["https://www.bernardo.com.tr", "page"],
+    ["https://www.gamegaraj.com", "page"],
 ]
 
-# Shopify altyapılı siteler
 SHOPIFY_KOLEKSIYONLAR = [
     "https://www.korendy.com.tr/collections/all",
     "https://www.wallartistanbul.com/collections/tum-islami-eserler",
+    "https://www.kigili.com/collections/all",
+    "https://www.dagi.com.tr/collections/all",
+    "https://www.patirti.com/collections/all",
+    "https://www.derimod.com.tr/collections/all",
+    "https://www.greyder.com/collections/all",
 ]
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
