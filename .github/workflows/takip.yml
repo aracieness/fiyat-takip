@@ -1,7 +1,7 @@
 name: Fiyat Takip
 on:
   schedule:
-    - cron: "0 * * * *"   # her saat basi calisir
+    - cron: "0 */2 * * *"   # her saat basi calisir
   workflow_dispatch:        # elle calistirma dugmesi
 permissions:
   contents: write
