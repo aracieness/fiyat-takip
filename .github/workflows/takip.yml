@@ -1,8 +1,8 @@
 name: Fiyat Takip
 on:
   schedule:
-    - cron: "0 */2 * * *"   # her saat basi calisir
-  workflow_dispatch:        # elle calistirma dugmesi
+    - cron: "0 */3 * * *"   # 3 saatte bir calisir
+  workflow_dispatch:          # elle calistirma dugmesi
 permissions:
   contents: write
 jobs:
@@ -22,3 +22,6 @@ jobs:
         run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
+          git add fiyatlar.json
+          git commit -m "fiyat guncelleme" || echo "degisiklik yok"
+          git push
