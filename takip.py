@@ -7,16 +7,14 @@ MAX_SAYFA = 8
 # HTML ile taranan siteler: [kategori_linki, sayfa_parametresi]
 KATEGORILER = [
     ["https://www.koton.com/erkek-tisort/", "page"],
-    ["https://www.n11.com/elektronik", "pg"],
     ["https://www.n11.com/telefon-ve-aksesuarlari", "pg"],
     ["https://www.n11.com/bilgisayar", "pg"],
-    ["https://www.n11.com/otomotiv-motosiklet", "pg"],
-    ["https://www.n11.com/moda", "pg"],
-    ["https://www.n11.com/ev-ve-yasam", "pg"],
-    ["https://www.ciceksepeti.com/cicek", "page"],
-    ["https://www.gratis.com/makyaj-c-501", "page"],
-    ["https://www.karaca.com/kahve-makineleri", "page"],
-    ["https://www.beymen.com/tr/kadin-10006", "page"],
+    ["https://www.n11.com/bilgisayar/dizustu-bilgisayar", "pg"],
+    # Yeni N11 kategorisi eklemek için: n11.com'da kategorilere tıklaya tıklaya
+    # ÜRÜNLERİN FİYATLARIYLA LİSTELENDİĞİ sayfaya kadar in, adres çubuğundaki
+    # linki kopyala ve buraya yeni satır olarak ekle: ["LINK", "pg"],
+    # Koton kategorisi için aynısı, sonu: "page"],
+]
     # Yeni kategori eklemek için: siteye gir, kategoriyi aç, linki kopyala,
     # buraya yeni satır olarak ekle: ["LINK", "page"],  (N11 için "pg")
 ]
