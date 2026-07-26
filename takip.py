@@ -6,7 +6,12 @@ MAX_SAYFA = 10
 
 KATEGORILER = [
     "https://www.koton.com/erkek-tisort/",
-    "https://www.boyner.com.tr/erkek-tisort-c-1010",
+    "https://www.koton.com/kadin-giyim/",
+    "https://www.koton.com/erkek-giyim/",
+    "https://www.koton.com/cocuk-kiz-cocuk/",
+    "https://www.koton.com/cocuk-erkek-cocuk/",
+    "https://www.koton.com/kadin-elbise/",
+    "https://www.koton.com/erkek-kot-pantolon/",
 ]
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
