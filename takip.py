@@ -83,4 +83,69 @@ def shopify_tara(koleksiyon):
     kok = "{0.scheme}://{0.netloc}".format(urlparse(koleksiyon))
     urunler = {}
     for sayfa in range(1, 60):
-        url = f"{koleksiyon}/products.json?limit=250&p
+        url = f"{koleksiyon}/products.json?limit=250&page={sayfa}"
+        r = requests.get(url, headers=BASLIK, timeout=30)
+        if r.status_code != 200:
+            print("UYARI: shopify erisilemedi:", url, "| HTTP:", r.status_code)
+            break
+        veriler = r.json().get("products", [])
+        if not veriler:
+            break
+        for p in veriler:
+            fiyatlar = []
+            for v in p.get("variants", []):
+                try:
+                    fiyatlar.append(float(v["price"]))
+                except (KeyError, ValueError, TypeError):
+                    pass
+            fiyatlar = [f for f in fiyatlar if f >= 20]
+            if fiyatlar:
+                urunler[kok + "/products/" + p["handle"]] = min(fiyatlar)
+        time.sleep(1)
+    return urunler
+
+try:
+    with open("fiyatlar.json") as f:
+        eski = json.load(f)
+except FileNotFoundError:
+    eski = {}
+
+def isle(bulunan):
+    for link, fiyat in bulunan.items():
+        onceki = eski.get(link)
+        if onceki and fiyat <= onceki * (1 - ESIK / 100):
+            bildir(f"🔥 %{ESIK}+ DUSUS!\n{onceki:,.2f} TL -> {fiyat:,.2f} TL\n{link}")
+        eski[link] = fiyat
+
+toplam = 0
+for kategori, prm in KATEGORILER:
+    gorulen = set()
+    for sayfa in range(1, MAX_SAYFA + 1):
+        url = kategori if sayfa == 1 else f"{kategori}{'&' if '?' in kategori else '?'}{prm}={sayfa}"
+        try:
+            bulunan = sayfa_tara(url)
+        except Exception as e:
+            print("HATA:", url, type(e).__name__)
+            break
+        yeniler = set(bulunan) - gorulen
+        if not yeniler:
+            break
+        gorulen |= yeniler
+        isle(bulunan)
+        toplam += len(bulunan)
+        time.sleep(1)
+    print(kategori, "-> takip edilen urun:", len(gorulen))
+
+for koleksiyon in SHOPIFY_KOLEKSIYONLAR:
+    try:
+        bulunan = shopify_tara(koleksiyon)
+    except Exception as e:
+        print("HATA:", koleksiyon, type(e).__name__)
+        continue
+    isle(bulunan)
+    toplam += len(bulunan)
+    print(koleksiyon, "-> takip edilen urun:", len(bulunan))
+
+print("Taranan urun-fiyat kaydi:", toplam)
+with open("fiyatlar.json", "w") as f:
+    json.dump(eski, f, indent=2)
