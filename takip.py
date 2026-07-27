@@ -134,3 +134,48 @@ def isle(bulunan):
         onceki = eski.get(link)
         if onceki and fiyat <= onceki * (1 - ESIK / 100.0):
             dusus_sayisi += 1
+            mesaj = "%" + str(ESIK) + "+ DUSUS!\n"
+            mesaj += "{:,.2f} TL -> {:,.2f} TL\n".format(onceki, fiyat)
+            mesaj += link
+            bildir(mesaj)
+        eski[link] = fiyat
+
+
+toplam = 0
+for kategori, prm in KATEGORILER:
+    gorulen = set()
+    for sayfa in range(1, MAX_SAYFA + 1):
+        if sayfa == 1:
+            url = kategori
+        elif "?" in kategori:
+            url = kategori + "&" + prm + "=" + str(sayfa)
+        else:
+            url = kategori + "?" + prm + "=" + str(sayfa)
+        try:
+            bulunan = sayfa_tara(url)
+        except Exception as e:
+            print("HATA:", url, type(e).__name__)
+            break
+        yeniler = set(bulunan) - gorulen
+        if not yeniler:
+            break
+        gorulen |= yeniler
+        isle(bulunan)
+        toplam += len(bulunan)
+        time.sleep(1)
+    print(kategori, "-> takip edilen urun:", len(gorulen))
+
+for koleksiyon in SHOPIFY_KOLEKSIYONLAR:
+    try:
+        bulunan = shopify_tara(koleksiyon)
+    except Exception as e:
+        print("HATA:", koleksiyon, type(e).__name__)
+        continue
+    isle(bulunan)
+    toplam += len(bulunan)
+    print(koleksiyon, "-> takip edilen urun:", len(bulunan))
+
+print("Taranan urun-fiyat kaydi:", toplam)
+bildir("Tarama tamamlandi: " + str(toplam) + " urun kontrol edildi, " + str(dusus_sayisi) + " adet %" + str(ESIK) + "+ dusus bulundu.")
+with open("fiyatlar.json", "w") as f:
+    json.dump(eski, f, indent=2)
