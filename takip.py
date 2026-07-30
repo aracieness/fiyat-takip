@@ -11,6 +11,12 @@ KATEGORILER = [
     ["https://www.n11.com/bilgisayar/dizustu-bilgisayar", "pg"],
     ["https://www.tudors.com", "page"],
     ["https://tr.uspoloassn.com", "page"],
+    ["https://www.happinessistanbul.com", "page"],
+    ["https://www.slazenger.com.tr", "page"],
+    ["https://www.pasabahcemagazalari.com", "page"],
+    ["https://www.modalife.com.tr", "page"],
+    ["https://www.kahvedunyasi.com", "page"],
+    ["https://www.lastikborsasi.com", "page"],
 ]
 
 SHOPIFY_KOLEKSIYONLAR = [
@@ -20,6 +26,13 @@ SHOPIFY_KOLEKSIYONLAR = [
     "https://www.dagi.com.tr/collections/all",
     "https://www.patirti.com/collections/all",
     "https://www.derimod.com.tr/collections/all",
+    "https://www.gizia.com/collections/all",
+    "https://www.silkandcashmere.com/collections/all",
+    "https://www.thepurestsolutions.com/collections/all",
+    "https://www.jumbo.com.tr/collections/all",
+    "https://www.lav.com.tr/collections/all",
+    "https://www.cottonbox.com.tr/collections/all",
+    "https://www.storks.com.tr/collections/all",
 ]
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
@@ -98,7 +111,11 @@ def shopify_tara(koleksiyon):
     urunler = {}
     for sayfa in range(1, 60):
         url = koleksiyon + "/products.json?limit=250&page=" + str(sayfa)
-        r = requests.get(url, headers=BASLIK, timeout=30)
+        try:
+            r = requests.get(url, headers=BASLIK, timeout=30)
+        except Exception as e:
+            print("UYARI: shopify hata:", url, type(e).__name__)
+            break
         if r.status_code != 200:
             print("UYARI: shopify erisilemedi:", url, "| HTTP:", r.status_code)
             break
