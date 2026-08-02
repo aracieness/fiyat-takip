@@ -1,198 +1,549 @@
-import os, re, json, time, requests
-from urllib.parse import urlparse
+import re, requests
+from concurrent.futures import ThreadPoolExecutor
 
-ESIK = 50
-MAX_SAYFA = 8
-
-KATEGORILER = [
-    ["https://www.koton.com/erkek-tisort/", "page"],
-    ["https://www.n11.com/telefon-ve-aksesuarlari", "pg"],
-    ["https://www.n11.com/bilgisayar", "pg"],
-    ["https://www.n11.com/bilgisayar/dizustu-bilgisayar", "pg"],
-    ["https://www.tudors.com", "page"],
-    ["https://tr.uspoloassn.com", "page"],
-    ["https://www.happinessistanbul.com", "page"],
-    ["https://www.slazenger.com.tr", "page"],
-    ["https://www.pasabahcemagazalari.com", "page"],
-    ["https://www.modalife.com.tr", "page"],
-    ["https://www.kahvedunyasi.com", "page"],
-    ["https://www.lastikborsasi.com", "page"],
+SITELER = [
+    "https://www.journey.com.tr",
+    "https://www.addax.com.tr",
+    "https://www.olalook.com.tr",
+    "https://www.sementa.com",
+    "https://www.dilvin.com.tr",
+    "https://www.quzu.com.tr",
+    "https://www.robin.com.tr",
+    "https://www.perspective.com.tr",
+    "https://www.ekol.com.tr",
+    "https://www.aker.com.tr",
+    "https://www.tugbavenn.com",
+    "https://www.alvinaonline.com",
+    "https://www.ramsey.com.tr",
+    "https://www.cacharel.com.tr",
+    "https://www.dufy.com.tr",
+    "https://www.morven.com.tr",
+    "https://www.sabriozel.com",
+    "https://www.centone.com.tr",
+    "https://www.wessi.com",
+    "https://tr.dockers.com",
+    "https://www.kemaltanca.com.tr",
+    "https://www.hammerjack.com.tr",
+    "https://www.scooter.com.tr",
+    "https://www.polaris.com.tr",
+    "https://www.lumberjack.com.tr",
+    "https://www.bambiayakkabi.com.tr",
+    "https://www.muya.com.tr",
+    "https://www.yesil.com.tr",
+    "https://www.vicco.com.tr",
+    "https://tr.puma.com",
+    "https://www.jump.com.tr",
+    "https://www.tergan.com.tr",
+    "https://www.buenoshoes.com.tr",
+    "https://www.guardleather.com",
+    "https://www.gon.com.tr",
+    "https://www.bondnon.com",
+    "https://www.marjin.com.tr",
+    "https://www.ccs.com.tr",
+    "https://www.silverpolo.com.tr",
+    "https://www.baggaj.com",
+    "https://www.byhakan.com",
+    "https://www.myvalice.com",
+    "https://www.bagmori.com",
+    "https://www.dericlub.com",
+    "https://www.dericompany.com",
+    "https://www.lapc.com.tr",
+    "https://www.uspolobags.com.tr",
+    "https://www.bhpc.com.tr",
+    "https://www.cantadunyasi.com.tr",
+    "https://www.kemerdunyasi.com",
+    "https://www.noteshop.com.tr",
+    "https://www.hunca.com",
+    "https://www.badenatural.com.tr",
+    "https://www.otaci.com.tr",
+    "https://www.eyupsabrituncer.com",
+    "https://www.dalan.com.tr",
+    "https://www.bioxcin.com.tr",
+    "https://www.maruderm.com",
+    "https://www.sinoz.com.tr",
+    "https://www.newwell.com.tr",
+    "https://www.nascita.com.tr",
+    "https://www.lactone.com.tr",
+    "https://www.cosmed.com.tr",
+    "https://www.beebeauty.com.tr",
+    "https://www.atelierrebul.com",
+    "https://www.kozvit.com",
+    "https://www.vitaminler.com",
+    "https://www.theceel.com",
+    "https://www.thedermlab.com.tr",
+    "https://www.drclinic.com.tr",
+    "https://www.bionnex.com",
+    "https://www.bargello.com.tr",
+    "https://www.madparfumeur.com",
+    "https://www.eyfelparfum.com.tr",
+    "https://www.dpparfum.com.tr",
+    "https://www.lorisparfum.com",
+    "https://www.davidwalker.com.tr",
+    "https://tr.oriflame.com",
+    "https://www.yves-rocher.com.tr",
+    "https://www.nishane.com",
+    "https://www.arispirlanta.com",
+    "https://www.bluediamond.com.tr",
+    "https://www.sochic.com.tr",
+    "https://tr.pandora.net",
+    "https://www.chavin.com.tr",
+    "https://www.valori.com.tr",
+    "https://www.kocak.com.tr",
+    "https://www.favori.com.tr",
+    "https://www.gulaylar.com",
+    "https://www.altinplaza.com",
+    "https://www.fiyonk.com.tr",
+    "https://www.mysilvers.com.tr",
+    "https://www.elikasilver.com",
+    "https://www.silverella.com.tr",
+    "https://www.takidukkani.com",
+    "https://www.reiskuyumculuk.com",
+    "https://www.konyalisaat.com.tr",
+    "https://www.gunessaat.com",
+    "https://www.abtsaat.com",
+    "https://www.edipsaat.com",
+    "https://www.seikowatches.com.tr",
+    "https://www.citizenwatch.com.tr",
+    "https://www.danielklein.com.tr",
+    "https://www.quantum.com.tr",
+    "https://www.slazengersaat.com.tr",
+    "https://www.bigotti.com.tr",
+    "https://www.ferrucci.com.tr",
+    "https://www.wesse.com.tr",
+    "https://www.sergiotacchini.com.tr",
+    "https://www.welderwatch.com.tr",
+    "https://www.nacar.com.tr",
+    "https://www.jacquesphilippe.com.tr",
+    "https://www.vatanbilgisayar.com",
+    "https://www.easycep.com",
+    "https://www.getmobil.com",
+    "https://www.troyestore.com",
+    "https://consumer.huawei.com/tr",
+    "https://tr.msi.com",
+    "https://www.penta.com.tr",
+    "https://www.elmacik.com",
+    "https://www.datamarket.com.tr",
+    "https://www.neteshop.com",
+    "https://www.bilisimas.com.tr",
+    "https://www.segment.com.tr",
+    "https://www.arena.com.tr",
+    "https://www.platinmarket.com",
+    "https://www.mavibilgisayar.com",
+    "https://www.dijitaltrend.com",
+    "https://www.direnc.net",
+    "https://www.robolinkmarket.com",
+    "https://www.pimarket.com",
+    "https://www.arduinomarket.com",
+    "https://www.makermarket.com.tr",
+    "https://www.merpa.com.tr",
+    "https://www.sanalmarketim.com",
+    "https://www.qp.com.tr",
+    "https://www.gameekstra.com",
+    "https://www.overgame.com",
+    "https://www.gamermarkt.com",
+    "https://www.hawkchair.com",
+    "https://www.xdrive.com.tr",
+    "https://www.rampage.com.tr",
+    "https://tr.steelseries.com",
+    "https://rog.asus.com/tr",
+    "https://tr.aoc.com",
+    "https://www.gamebooster.com.tr",
+    "https://www.sarev.com",
+    "https://www.ecocotton.com.tr",
+    "https://www.doquhome.com",
+    "https://www.isbiryatak.com",
+    "https://www.bambiyatak.com",
+    "https://www.bellamaison.com",
+    "https://www.elart.com.tr",
+    "https://www.hobby.com.tr",
+    "https://www.minteks.com.tr",
+    "https://www.clasy.com.tr",
+    "https://www.issimohome.com",
+    "https://www.casacarina.com",
+    "https://www.juadesign.com",
+    "https://www.softcotton.com.tr",
+    "https://www.homesweethome.com.tr",
+    "https://www.alfemo.com.tr",
+    "https://www.konformobilya.com.tr",
+    "https://www.kilimmobilya.com.tr",
+    "https://www.cilek.com",
+    "https://www.bykepi.com",
+    "https://www.rabimobilya.com",
+    "https://www.woodesk.com.tr",
+    "https://www.evdemo.com.tr",
+    "https://www.evgor.com.tr",
+    "https://www.gundogdumobilya.com.tr",
+    "https://www.divanev.com.tr",
+    "https://www.dekorazi.com",
+    "https://www.modoko.com.tr",
+    "https://www.mobilyadiyari.com",
+    "https://www.crateandbarrel.com.tr",
+    "https://www.casa.com.tr",
+    "https://www.dekopasaj.com",
+    "https://www.ahsapsepeti.com",
+    "https://www.rafline.com",
+    "https://www.mien.com.tr",
+    "https://www.lovahome.com.tr",
+    "https://www.evconcept.com.tr",
+    "https://www.dekorbizden.com",
+    "https://www.cookplus.com.tr",
+    "https://www.aryildiz.com",
+    "https://www.nehir.com.tr",
+    "https://www.guralporselen.com.tr",
+    "https://www.tantitoni.com.tr",
+    "https://www.hisar.com.tr",
+    "https://www.cooker.com.tr",
+    "https://www.lavashop.com",
+    "https://www.bonera.com.tr",
+    "https://www.essenso.com.tr",
+    "https://www.amboss.com.tr",
+    "https://www.omscollection.com.tr",
+    "https://www.falez.com",
+    "https://www.evimsaray.com",
+    "https://www.paci.com.tr",
+    "https://www.thermoad.com",
+    "https://www.keramika.com.tr",
+    "https://www.bambum.com",
+    "https://www.arzum.com.tr",
+    "https://www.fakir.com.tr",
+    "https://www.profilo.com",
+    "https://www.arnica.com.tr",
+    "https://www.kiwi.com.tr",
+    "https://www.sinbo.com.tr",
+    "https://www.goldmaster.com.tr",
+    "https://www.stilevs.com",
+    "https://www.homend.com",
+    "https://www.king.com.tr",
+    "https://www.grundig.com.tr",
+    "https://www.regal-tr.com",
+    "https://www.altus.com.tr",
+    "https://www.finlux.com.tr",
+    "https://www.seg.com.tr",
+    "https://www.ugur.com.tr",
+    "https://www.vestfrost.com.tr",
+    "https://www.silverline.com.tr",
+    "https://www.kumtel.com",
+    "https://www.simfer.com.tr",
+    "https://www.ferre.com.tr",
+    "https://www.luxell.com.tr",
+    "https://www.civilim.com",
+    "https://www.babymall.com.tr",
+    "https://www.bebeji.com",
+    "https://www.minycenter.com",
+    "https://www.welcomebaby.com.tr",
+    "https://www.babyplus.com.tr",
+    "https://www.kraftbaby.com",
+    "https://www.prego.com.tr",
+    "https://www.pierrecardinbaby.com",
+    "https://www.baby2go.com.tr",
+    "https://www.babyhope.com.tr",
+    "https://www.kanz.com.tr",
+    "https://www.sevibebe.com",
+    "https://www.weebaby.com",
+    "https://www.bibaby.com.tr",
+    "https://www.azizbebe.com.tr",
+    "https://www.armaganoyuncak.com.tr",
+    "https://www.adoreoyuncak.com",
+    "https://www.pilsan.com.tr",
+    "https://www.dolu.com.tr",
+    "https://www.toyi.io",
+    "https://www.juenpetmarket.com",
+    "https://www.petburada.com",
+    "https://www.petihtiyac.com",
+    "https://www.petfor.com",
+    "https://www.mamadost.com.tr",
+    "https://www.patistore.com",
+    "https://www.petmarketim.com",
+    "https://www.junglepet.com.tr",
+    "https://www.ndmama.com.tr",
+    "https://www.petgross.com",
+    "https://www.petshoptr.com",
+    "https://www.vetshop.com.tr",
+    "https://www.patisepeti.com",
+    "https://www.markamama.com.tr",
+    "https://www.sporthink.com.tr",
+    "https://www.yalispor.com.tr",
+    "https://www.spx.com.tr",
+    "https://www.intersport.com.tr",
+    "https://www.sneaksup.com",
+    "https://www.fenerium.com",
+    "https://www.gsstore.org",
+    "https://www.kutupayisi.com",
+    "https://www.outdoortr.com",
+    "https://www.yds.com.tr",
+    "https://www.kampsepeti.com.tr",
+    "https://www.kampmarket.com",
+    "https://www.evolite.com.tr",
+    "https://www.freecamp.com.tr",
+    "https://www.andoutdoor.com",
+    "https://www.sedonastore.com",
+    "https://www.kronbisiklet.com",
+    "https://www.salcano.com",
+    "https://www.corelli.com.tr",
+    "https://www.carrarobisiklet.com",
+    "https://www.mosso.com.tr",
+    "https://www.umitbisiklet.com.tr",
+    "https://www.bisan.com.tr",
+    "https://www.deltabisiklet.com",
+    "https://www.bikeandoutdoor.com",
+    "https://www.pedalbox.com.tr",
+    "https://www.velespit.com",
+    "https://www.bikestore.com.tr",
+    "https://www.bisikletsepeti.com",
+    "https://www.lastikpark.com",
+    "https://www.otopratik.com.tr",
+    "https://www.otoparcasan.com",
+    "https://www.parcabudur.com",
+    "https://www.otoparcasepeti.com",
+    "https://www.jantdunyasi.com",
+    "https://www.jantmarket.com",
+    "https://www.akumarket.com",
+    "https://www.mutluaku.com.tr",
+    "https://www.inciaku.com",
+    "https://www.autoclub.com.tr",
+    "https://www.otoaksesuarci.com",
+    "https://www.arabamarket.com.tr",
+    "https://www.ototrend.com",
+    "https://www.bahcemarket.com",
+    "https://www.tarimmarket.com",
+    "https://www.sulamamarket.com",
+    "https://www.fidanburada.com",
+    "https://www.nezih.com.tr",
+    "https://www.keskincolor.com",
+    "https://www.adel.com.tr",
+    "https://www.faber-castell.com.tr",
+    "https://www.scrikss.com.tr",
+    "https://www.serve.com.tr",
+    "https://www.pensan.com.tr",
+    "https://www.mopak.com.tr",
+    "https://www.gipta.com.tr",
+    "https://www.artdepo.com",
+    "https://www.hobium.com",
+    "https://www.tazedirekt.com",
+    "https://www.hafizmustafa.com",
+    "https://www.koska.com.tr",
+    "https://www.komili.com.tr",
+    "https://www.taris.com.tr",
+    "https://www.marmarabirlik.com.tr",
+    "https://www.senpilic.com.tr",
+    "https://www.namet.com.tr",
+    "https://www.apikoglu.com.tr",
+    "https://www.pinar.com.tr",
+    "https://www.eataly.com.tr",
+    "https://www.medikalburada.com",
+    "https://www.medikalcim.com",
+    "https://www.evdesaglikmarket.com",
+    "https://www.ortopedikmarket.com",
+    "https://www.medikaldepo.com",
+    "https://www.plusmed.com.tr",
+    "https://www.weewell.com.tr",
+    "https://www.drfrei.com",
+    "https://www.istanbulkitapcisi.com",
+    "https://www.kidega.com",
+    "https://www.remzikitabevi.com.tr",
+    "https://www.iskulturyayinlari.com.tr",
+    "https://www.ykykultur.com.tr",
+    "https://www.penguenkitabevi.com",
+    "https://www.kitapsec.com",
+    "https://www.ilknokta.com",
+    "https://www.fullamoda.com",
+    "https://www.ecanta.com.tr",
+    "https://www.boyner.com.tr",
+    "https://www.istanbulbilisim.com.tr",
+    "https://www.webdenal.com",
+    "https://www.ucuzu.com.tr",
+    "https://www.teknofix.com.tr",
+    "https://www.bilkom.com.tr",
+    "https://www.mucitpanda.com",
+    "https://www.karinca.com.tr",
+    "https://www.evkur.com.tr",
+    "https://www.shopsa.com.tr",
+    "https://www.madmext.com",
+    "https://www.zuhre.com.tr",
+    "https://www.efabrika.com",
+    "https://www.sportinn.com.tr",
+    "https://www.robotus.net",
+    "https://www.hizlipazar.com",
+    "https://www.tedariksepeti.com",
+    "https://www.urunburada.com",
+    "https://www.ofmark.com",
+    "https://www.istanbulticaret.com",
+    "https://www.elektrikdeposu.com",
+    "https://www.ledavm.net",
+    "https://www.teknomarketim.com",
+    "https://www.profesyonelmarket.com",
+    "https://www.yapimarket.com",
+    "https://www.hirdavatburada.com",
+    "https://www.hirdavatmarketim.com",
+    "https://www.ankastrecenter.com",
+    "https://www.banyodesign.com",
+    "https://www.seramiksan.com.tr",
+    "https://www.vitrastore.com",
+    "https://www.egeyapimarket.com",
+    "https://www.bataryaonline.com",
+    "https://www.elektrikmarketim.com",
+    "https://www.endustrimarket.com",
+    "https://www.kirtasiyedeposu.com",
+    "https://www.ofisdeposu.com",
+    "https://www.promosyonmarket.com",
+    "https://www.ambalajstore.com",
+    "https://www.temizlikmarketi.com",
+    "https://www.endustriyelmutfak.com",
+    "https://www.ambalajburada.com",
+    "https://www.marketpaketi.com",
+    "https://www.uspolo.com.tr",
+    "https://www.nautica.com.tr",
+    "https://www.ltbjeans.com",
+    "https://www.saygigiyim.com",
+    "https://www.xside.com.tr",
+    "https://www.efor.com.tr",
+    "https://www.bisse.com",
+    "https://www.sateen.com.tr",
+    "https://www.fabrika.com.tr",
+    "https://www.ozdilekteyim.com",
+    "https://www.cachcach.com",
+    "https://www.venn.com.tr",
+    "https://www.beyyoglu.com.tr",
+    "https://www.giziagate.com",
+    "https://www.zizigo.com",
+    "https://www.terganstore.com",
+    "https://www.deripabuc.com",
+    "https://www.onlinemagaza.com",
+    "https://www.gonderi.com.tr",
+    "https://www.sararshop.com",
+    "https://www.dore.com.tr",
+    "https://www.avrupapazar.com",
+    "https://www.kozmela.com",
+    "https://www.kozmotik.com",
+    "https://www.kozmopark.com",
+    "https://www.eczanedeposu.com",
+    "https://www.kozmetikcity.com",
+    "https://www.makyajtrendi.com",
+    "https://www.perfumepoint.com.tr",
+    "https://www.gurmepaket.com",
+    "https://www.gurmenet.com",
+    "https://www.organiksepeti.com",
+    "https://www.dogaltakil.com",
+    "https://www.peynirci.com.tr",
+    "https://www.zeytinhan.com",
+    "https://www.baklavacim.com",
+    "https://www.kuruyemis.com.tr",
+    "https://www.aktarmarket.com",
+    "https://www.petgrossmarket.com",
+    "https://www.petonline.com.tr",
+    "https://www.petmama.com.tr",
+    "https://www.petdunyasi.com.tr",
+    "https://www.akvaryum.com",
+    "https://www.akvaryummarket.com",
+    "https://www.balikmarket.com",
+    "https://www.kedievi.com",
+    "https://www.kopekevi.com",
+    "https://www.patipazar.com",
+    "https://www.campingstore.com.tr",
+    "https://www.kampdunyasi.com",
+    "https://www.trekkingmarket.com",
+    "https://www.dagcim.com",
+    "https://www.outdoormarket.com.tr",
+    "https://www.avmarketi.com",
+    "https://www.balikavmarket.com",
+    "https://www.oltabalik.com",
+    "https://www.dogaspor.com",
+    "https://www.spormarketim.com",
+    "https://www.hirdavatdunyasi.com",
+    "https://www.yapimarketi.com.tr",
+    "https://www.ustamgeliyor.com",
+    "https://www.boyacenter.com",
+    "https://www.bahceburada.com",
+    "https://www.cicekdunyasi.com",
+    "https://www.fidancim.com",
+    "https://www.tarimaletleri.com",
+    "https://www.sulamadeposu.com",
+    "https://www.seraekipmanlari.com",
+    "https://www.bebeksepeti.com",
+    "https://www.bebekmarketim.com",
+    "https://www.oyuncaksepeti.com",
+    "https://www.hobidunyasi.com",
+    "https://www.sanatmalzemeleri.com",
+    "https://www.ofismarketim.com",
+    "https://www.kagitmarket.com",
+    "https://www.kirtasiyeci.com",
+    "https://www.mobilyamarketim.com",
+    "https://www.evtekstilim.com",
+    "https://www.mutfaksepeti.com",
+    "https://www.zuccaciyem.com",
+    "https://www.dekorburada.com",
+    "https://www.hediyelikesya.com",
+    "https://www.camdekor.com",
+    "https://www.ahsapurunler.com",
+    "https://www.seramikmarket.com",
+    "https://www.porselenstore.com",
+    "https://www.evurunleri.com",
 ]
 
-SHOPIFY_KOLEKSIYONLAR = [
-    "https://www.korendy.com.tr/collections/all",
-    "https://www.wallartistanbul.com/collections/tum-islami-eserler",
-    "https://www.kigili.com/collections/all",
-    "https://www.dagi.com.tr/collections/all",
-    "https://www.patirti.com/collections/all",
-    "https://www.derimod.com.tr/collections/all",
-    "https://www.gizia.com/collections/all",
-    "https://www.silkandcashmere.com/collections/all",
-    "https://www.thepurestsolutions.com/collections/all",
-    "https://www.jumbo.com.tr/collections/all",
-    "https://www.lav.com.tr/collections/all",
-    "https://www.cottonbox.com.tr/collections/all",
-    "https://www.storks.com.tr/collections/all",
-]
-
-TOKEN = os.environ["TELEGRAM_TOKEN"]
-CHAT_ID = os.environ["CHAT_ID"]
 BASLIK = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Accept-Language": "tr-TR,tr;q=0.9",
 }
 
 
-def bildir(mesaj):
-    requests.post(
-        "https://api.telegram.org/bot" + TOKEN + "/sendMessage",
-        data={"chat_id": CHAT_ID, "text": mesaj},
-    )
-
-
-def tl_virgul(m):
-    return float(m.replace(".", "").replace(",", "."))
-
-
-def fiyat_bul(blok):
-    sonuc = []
-    for f in re.findall(r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*TL', blok):
-        sonuc.append(tl_virgul(f))
-    for f in re.findall(r'>\s*(\d{2,6}\.\d{2})\s*<', blok):
-        sonuc.append(float(f))
-    for f in re.findall(r'(\d{1,3}(?:,\d{3})*\.\d{2})\s*TL', blok):
-        sonuc.append(float(f.replace(",", "")))
-    for f in re.findall(r'"(?:price|salePrice|sellingPrice|discountedPrice|amount)"\s*:\s*"?(\d{2,6}(?:\.\d{1,2})?)"?', blok):
-        sonuc.append(float(f))
-    return [f for f in sonuc if 50 <= f <= 500000]
-
-
-def sayfa_tara(url):
-    p = urlparse(url)
-    kok = p.scheme + "://" + p.netloc
-    ana_alan = ".".join(p.netloc.split(".")[-2:])
-    r = requests.get(url, headers=BASLIK, timeout=30)
-    html = r.text
-    urunler = {}
-    linkler = list(re.finditer(r'<a[^>]+href="(https?://[^"#? ]+|/[^"#? ]+)"', html))
-    for i, m in enumerate(linkler):
-        link = m.group(1)
-        if link.startswith("/"):
-            link = kok + link
-        if ana_alan not in urlparse(link).netloc:
-            continue
-        son_parca = link.rstrip("/").split("/")[-1]
-        urun_gibi = (
-            "/products/" in link
-            or "-p-" in link
-            or "urun." in urlparse(link).netloc
-            or re.search(r"\d{5,}", son_parca)
-        )
-        if not urun_gibi:
-            continue
-        bas = m.end()
-        if i + 1 < len(linkler):
-            son = linkler[i + 1].start()
-        else:
-            son = min(len(html), bas + 2500)
-        fiyatlar = fiyat_bul(html[bas:son])
-        if fiyatlar:
-            fiyat = min(fiyatlar)
-            if link not in urunler or fiyat < urunler[link]:
-                urunler[link] = fiyat
-    if not urunler:
-        print("UYARI: urun bulunamadi:", url, "| HTTP:", r.status_code)
-    return urunler
-
-
-def shopify_tara(koleksiyon):
-    p = urlparse(koleksiyon)
-    kok = p.scheme + "://" + p.netloc
-    urunler = {}
-    for sayfa in range(1, 60):
-        url = koleksiyon + "/products.json?limit=250&page=" + str(sayfa)
-        try:
-            r = requests.get(url, headers=BASLIK, timeout=30)
-        except Exception as e:
-            print("UYARI: shopify hata:", url, type(e).__name__)
-            break
-        if r.status_code != 200:
-            print("UYARI: shopify erisilemedi:", url, "| HTTP:", r.status_code)
-            break
-        veriler = r.json().get("products", [])
-        if not veriler:
-            break
-        for pr in veriler:
-            fiyatlar = []
-            for v in pr.get("variants", []):
-                try:
-                    fiyatlar.append(float(v["price"]))
-                except (KeyError, ValueError, TypeError):
-                    pass
-            fiyatlar = [f for f in fiyatlar if f >= 20]
-            if fiyatlar:
-                urunler[kok + "/products/" + pr["handle"]] = min(fiyatlar)
-        time.sleep(1)
-    return urunler
-
-
-try:
-    with open("fiyatlar.json") as f:
-        eski = json.load(f)
-except FileNotFoundError:
-    eski = {}
-
-dusus_sayisi = 0
-
-
-def isle(bulunan):
-    global dusus_sayisi
-    for link, fiyat in bulunan.items():
-        onceki = eski.get(link)
-        if onceki and fiyat <= onceki * (1 - ESIK / 100.0):
-            dusus_sayisi += 1
-            mesaj = "%" + str(ESIK) + "+ DUSUS!\n"
-            mesaj += "{:,.2f} TL -> {:,.2f} TL\n".format(onceki, fiyat)
-            mesaj += link
-            bildir(mesaj)
-        eski[link] = fiyat
-
-
-toplam = 0
-for kategori, prm in KATEGORILER:
-    gorulen = set()
-    for sayfa in range(1, MAX_SAYFA + 1):
-        if sayfa == 1:
-            url = kategori
-        elif "?" in kategori:
-            url = kategori + "&" + prm + "=" + str(sayfa)
-        else:
-            url = kategori + "?" + prm + "=" + str(sayfa)
-        try:
-            bulunan = sayfa_tara(url)
-        except Exception as e:
-            print("HATA:", url, type(e).__name__)
-            break
-        yeniler = set(bulunan) - gorulen
-        if not yeniler:
-            break
-        gorulen |= yeniler
-        isle(bulunan)
-        toplam += len(bulunan)
-        time.sleep(1)
-    print(kategori, "-> takip edilen urun:", len(gorulen))
-
-for koleksiyon in SHOPIFY_KOLEKSIYONLAR:
+def shopify_kapisi(kok):
     try:
-        bulunan = shopify_tara(koleksiyon)
-    except Exception as e:
-        print("HATA:", koleksiyon, type(e).__name__)
-        continue
-    isle(bulunan)
-    toplam += len(bulunan)
-    print(koleksiyon, "-> takip edilen urun:", len(bulunan))
+        r = requests.get(kok + "/products.json?limit=250", headers=BASLIK, timeout=10)
+        if r.status_code != 200:
+            return " | SHOPIFY-KAPALI(" + str(r.status_code) + ")"
+        return " | SHOPIFY-ACIK(" + str(len(r.json().get("products", []))) + ")"
+    except Exception:
+        return " | SHOPIFY-KAPALI(hata)"
 
-print("Taranan urun-fiyat kaydi:", toplam)
-bildir("Tarama tamamlandi: " + str(toplam) + " urun kontrol edildi, " + str(dusus_sayisi) + " adet %" + str(ESIK) + "+ dusus bulundu.")
-with open("fiyatlar.json", "w") as f:
-    json.dump(eski, f, indent=2)
+
+def woo_kapisi(kok):
+    for y in ["/wp-json/wc/store/products?per_page=100",
+              "/wp-json/wc/store/v1/products?per_page=100"]:
+        try:
+            r = requests.get(kok + y, headers=BASLIK, timeout=10)
+            if r.status_code == 200:
+                veri = r.json()
+                if isinstance(veri, list) and len(veri) > 0:
+                    return " | WOO-ACIK(" + str(len(veri)) + ")"
+        except Exception:
+            pass
+    return " | WOO-KAPALI"
+
+
+def kontrol(url):
+    p = url.split("//")[1]
+    alan = p.split("/")[0].replace("www.", "")
+    try:
+        r = requests.get(url, headers=BASLIK, timeout=10)
+        h = r.text
+        virgullu = len(re.findall(r"\d{1,3}(?:\.\d{3})*,\d{2}\s*TL", h))
+        noktali = len(re.findall(r">\s*\d{2,6}\.\d{2}\s*<", h))
+        jsn = len(re.findall(r'"(?:price|salePrice|sellingPrice|amount)"\s*:\s*"?\d', h))
+        ek = ""
+        kok = "https://" + p.split("/")[0]
+        if "cdn/shop" in h or "cdn.shopify" in h:
+            ek += shopify_kapisi(kok)
+        if "wp-content" in h or "woocommerce" in h.lower():
+            ek += woo_kapisi(kok)
+        if "ticimax" in h.lower():
+            ek += " | TICIMAX"
+        if "ideasoft" in h.lower():
+            ek += " | IDEASOFT"
+        if "tsoft" in h.lower():
+            ek += " | TSOFT"
+        return (alan + ": HTTP " + str(r.status_code) + " | TL:" + str(virgullu)
+                + " nokta:" + str(noktali) + " json:" + str(jsn) + ek)
+    except Exception as e:
+        return alan + ": HATA - " + type(e).__name__
+
+
+print("=" * 70)
+print("SITE TESTI - toplam", len(SITELER), "site")
+print("=" * 70)
+
+with ThreadPoolExecutor(max_workers=12) as havuz:
+    for satir in havuz.map(kontrol, SITELER):
+        print(satir)
+
+print("=" * 70)
+print("BITTI")
